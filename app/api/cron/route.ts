@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 
-import { getLowestPrice, getHighestPrice, getAveragePrice, getEmailNotifType } from "@/lib/utils";
+import {
+  getLowestPrice,
+  getHighestPrice,
+  getAveragePrice,
+  getEmailNotifType,
+} from "@/lib/utils";
 import { connectToDB } from "@/lib/mongoose";
 import Product from "@/lib/models/product.model";
 import { scrapeAmazonProduct } from "@/lib/scraper";
 import { generateEmailBody, sendEmail } from "@/lib/nodemailer";
 
-export const maxDuration = 300; // This function can run for a maximum of 300 seconds
+export const maxDuration = 10; // This function can run for a maximum of 300 seconds
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -20,7 +25,7 @@ export async function GET(request: Request) {
 
     // ======================== 1 SCRAPE LATEST PRODUCT DETAILS & UPDATE DB
     const updatedProducts = await Promise.all(
-      products.map(async (currentProduct) => {
+      products.map(async (currentProduct: any) => {
         // Scrape product
         const scrapedProduct = await scrapeAmazonProduct(currentProduct.url);
 
@@ -61,9 +66,14 @@ export async function GET(request: Request) {
             url: updatedProduct.url,
           };
           // Construct emailContent
-          const emailContent = await generateEmailBody(productInfo, emailNotifType);
+          const emailContent = await generateEmailBody(
+            productInfo,
+            emailNotifType
+          );
           // Get array of user emails
-          const userEmails = updatedProduct.users.map((user: any) => user.email);
+          const userEmails = updatedProduct.users.map(
+            (user: any) => user.email
+          );
           // Send email notification
           await sendEmail(emailContent, userEmails);
         }
